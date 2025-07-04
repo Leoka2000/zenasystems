@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
-
 import {
   Card,
   CardContent,
@@ -18,16 +17,19 @@ import {
 } from "@/components/ui/chart"
 
 interface ChartLineInteractiveProps {
-  temperature: number[]
-  timestamp: string[] // ISO format dates or timestamps
+  temperature: number | null
+  timestamp: number | null
 }
 
-export const description = "An interactive line chart"
+export const description = "Real-time temperature monitoring"
+
+interface TemperatureDataPoint {
+  date: string
+  temperature: number | null
+  timestamp: number | null
+}
 
 const chartConfig = {
-  views: {
-    label: "Temperature",
-  },
   temperature: {
     label: "Temperature",
     color: "var(--chart-1)",
@@ -37,49 +39,105 @@ const chartConfig = {
 export const ChartLineInteractive = ({
   temperature,
   timestamp,
-}) => {
-  const [activeChart] = React.useState<keyof typeof chartConfig>("temperature")
+}: ChartLineInteractiveProps) => {
+  const [data, setData] = React.useState<TemperatureDataPoint[]>([])
+  const [maxDataPoints] = React.useState(60) // Keep last 60 readings
+  const activeChart = "temperature" // We only have temperature now
 
-   React.useEffect(() => {
-    console.log("Temperature:", temperature);
-    console.log("Timestamp:", timestamp);
-  }, [temperature, timestamp]);
-
-const chartData = React.useMemo(() => {
-  if (!Array.isArray(temperature) || !Array.isArray(timestamp)) return []
-  return timestamp.map((time, index) => ({
-    date: time,
-    temperature: temperature[index] ?? null,
-  }))
-}, [temperature, timestamp])
-
-
-const total = React.useMemo(() => {
-  if (!Array.isArray(temperature)) {
-    return { temperature: 0 }
+  // Format timestamp to CET timezone
+  const formatTimestamp = (timestamp: number | null) => {
+    if (!timestamp) return "N/A"
+    return new Date(timestamp * 1000).toLocaleString("en-GB", {
+      timeZone: "Europe/Paris",
+      hour12: false,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    })
   }
-  return {
-    temperature: temperature.reduce((acc, temp) => acc + temp, 0),
-  }
-}, [temperature])
+
+  // Update chart data when new temperature reading arrives
+  React.useEffect(() => {
+    if (temperature !== null && timestamp !== null) {
+      const date = new Date(timestamp * 1000).toISOString()
+
+      setData(prevData => {
+        const newData = [
+          ...prevData,
+          { date, temperature, timestamp }
+        ]
+
+        // Keep only the last maxDataPoints readings
+        if (newData.length > maxDataPoints) {
+          return newData.slice(-maxDataPoints)
+        }
+        return newData
+      })
+    }
+  }, [temperature, timestamp, maxDataPoints])
+
+  // Calculate current temperature stats
+  const stats = React.useMemo(() => {
+    const validData = data.filter(d => d.temperature !== null) as { temperature: number }[]
+
+    if (validData.length === 0) {
+      return {
+        current: null,
+        average: null,
+        min: null,
+        max: null
+      }
+    }
+
+    const current = validData[validData.length - 1].temperature
+    const sum = validData.reduce((acc, curr) => acc + curr.temperature, 0)
+    const average = sum / validData.length
+    const min = Math.min(...validData.map(d => d.temperature))
+    const max = Math.max(...validData.map(d => d.temperature))
+
+    return {
+      current,
+      average,
+      min,
+      max
+    }
+  }, [data])
 
   return (
     <Card className="py-4 sm:py-0">
       <CardHeader className="flex flex-col items-stretch border-b !p-0 sm:flex-row">
         <div className="flex flex-1 flex-col justify-center gap-1 px-6 pb-3 sm:pb-0">
-          <CardTitle>Temperature Over Time</CardTitle>
-          <CardDescription>Live temperature chart</CardDescription>
+          <CardTitle>Temperature Monitor</CardTitle>
+          <CardDescription>
+            Real-time temperature readings from Bluetooth device
+          </CardDescription>
         </div>
-        <div className="flex">
-          <div
-            data-active={true}
-            className="data-[active=true]:bg-muted/50 flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l sm:border-t-0 sm:border-l sm:px-8 sm:py-6"
-          >
-            <span className="text-muted-foreground text-xs">
-              {chartConfig.temperature.label}
+        <div className="grid grid-cols-2 gap-1 w-full px-6 py-4">
+          <div className="flex flex-col gap-1">
+            <span className="text-muted-foreground mb-4 text-xs">Current</span>
+            <span className="text-lg font-bold sm:text-xl">
+              {stats.current !== null ? `${stats.current.toFixed(2)} °C` : "N/A"}
             </span>
-            <span className="text-lg leading-none font-bold sm:text-3xl">
-              {total.temperature.toLocaleString()}
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-muted-foreground text-xs">Average</span>
+            <span className="text-lg font-bold sm:text-xl">
+              {stats.average !== null ? `${stats.average.toFixed(2)} °C` : "N/A"}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-muted-foreground text-xs">Min</span>
+            <span className="text-lg font-bold sm:text-xl">
+              {stats.min !== null ? `${stats.min.toFixed(2)} °C` : "N/A"}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-muted-foreground text-xs">Max</span>
+            <span className="text-lg font-bold sm:text-xl">
+              {stats.max !== null ? `${stats.max.toFixed(2)} °C` : "N/A"}
             </span>
           </div>
         </div>
@@ -90,8 +148,12 @@ const total = React.useMemo(() => {
           className="aspect-auto h-[250px] w-full"
         >
           <LineChart
-            data={chartData}
-            margin={{ left: 12, right: 12 }}
+            accessibilityLayer
+            data={data}
+            margin={{
+              left: 12,
+              right: 12,
+            }}
           >
             <CartesianGrid vertical={false} />
             <XAxis
@@ -102,9 +164,10 @@ const total = React.useMemo(() => {
               minTickGap={32}
               tickFormatter={(value) => {
                 const date = new Date(value)
-                return date.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
+                return date.toLocaleTimeString("en-US", {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit'
                 })
               }}
             />
@@ -114,12 +177,14 @@ const total = React.useMemo(() => {
                   className="w-[150px]"
                   nameKey="temperature"
                   labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
+                    return new Date(value).toLocaleTimeString("en-US", {
+                      hour12: false,
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit'
                     })
                   }}
+                  valueFormatter={(value) => `${value} °C`}
                 />
               }
             />
@@ -129,6 +194,7 @@ const total = React.useMemo(() => {
               stroke={`var(--color-temperature)`}
               strokeWidth={2}
               dot={false}
+              isAnimationActive={false} // Disable animation for real-time updates
             />
           </LineChart>
         </ChartContainer>
