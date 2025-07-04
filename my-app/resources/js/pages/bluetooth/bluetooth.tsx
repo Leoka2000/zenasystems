@@ -347,14 +347,6 @@ const App = () => {
             </button>
           )}
         </div>
-
-        <p className="mt-8 text-sm text-gray-500">
-          Ensure your device is discoverable and has the specified service and
-          characteristic.
-          <br />
-          Web Bluetooth API requires HTTPS and user gesture to initiate
-          connection.
-        </p>
       </div>
     </div>
   );

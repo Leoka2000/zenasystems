@@ -3,6 +3,10 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import BluetoothTemperature from './bluetooth/bluetooth';
+// Update the import path below to match the actual location and filename of your temperature-chart component.
+// For example, if the file is named TemperatureChart.tsx in the same directory, use:
+import { ChartLineInteractive } from "./charts/temperature-chart";
+// Or, if the file is in a different location, adjust the path accordingly.
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -31,6 +35,7 @@ export default function Dashboard() {
                 <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min bg-gray-50 dark:border-sidebar-border">
                     <PlaceholderPattern className="absolute inset-0 size-full " />
                         <BluetoothTemperature />
+                          <ChartLineInteractive />
                 </div>
             </div>
         </AppLayout>
