@@ -37,8 +37,13 @@ const chartConfig = {
 export const ChartLineInteractive = ({
   temperature,
   timestamp,
-}: ChartLineInteractiveProps) => {
+}) => {
   const [activeChart] = React.useState<keyof typeof chartConfig>("temperature")
+
+   React.useEffect(() => {
+    console.log("Temperature:", temperature);
+    console.log("Timestamp:", timestamp);
+  }, [temperature, timestamp]);
 
 const chartData = React.useMemo(() => {
   if (!Array.isArray(temperature) || !Array.isArray(timestamp)) return []
