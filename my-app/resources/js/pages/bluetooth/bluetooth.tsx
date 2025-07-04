@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { ChartLineInteractive } from "../charts/temperature-chart";
+import { Button } from "@/components/ui/button";
 
 // Define the UUIDs provided by the user
 const SERVICE_UUID = "12345678-1234-1234-1234-1234567890ab";
@@ -303,24 +304,27 @@ const BluetoothTemperature = () => {
   }, [isConnected, fullDisconnectCleanup]);
 
   return (
-    <div className="">
-      <h1 className="text-lg font-bold text-gray-800 mb-6">
+    <div className="p-4 mb-2">
+      <h1 className="text-base font-bold text-gray-800 mb-6">
         Bluetooth Sensor Data
       </h1>
       <div className="mb-6">
-        <p className="text-lg text-gray-600 mb-2">
-          Status: <span className="font-semibold text-blue-600">{status}</span>
+        <p className="text-base text-gray-600 mb-2">
+          Status:{" "}
+          <span className="font-semibold text-base text-blue-600">
+            {status}
+          </span>
         </p>
         {temperature !== null && (
-          <p className="text-lg text-gray-700 font-xs mb-2">
+          <p className="text-base text-gray-700s mb-2">
             Temperature:{" "}
-            <span className="font-bold font-xs text-indigo-700">
+            <span className="font-bold text-base text-indigo-700">
               {temperature.toFixed(2)} °C
             </span>
           </p>
         )}
         {timestamp !== null && (
-          <p className="text-lg text-gray-700">
+          <p className="text-base text-gray-700">
             Timestamp:{" "}
             <span className="font-bold text-green-700">
               {formatTimestamp(timestamp)}
@@ -328,18 +332,19 @@ const BluetoothTemperature = () => {
           </p>
         )}
       </div>
-      <div className="flex flex-col font-sm space-y-2">
+
+      <div className="flex flex-col mb-4 font-sm space-y-2">
         {!isConnected ? (
           <button
             onClick={connectBluetooth}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg text-base shadow-md transition duration-300 ease-in-out transform hover:scale-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
           >
-            Connect to Bluetooth Device
+            Connect to bluetooth device
           </button>
         ) : (
           <button
             onClick={disconnectBluetooth}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg text-base shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
           >
             Disconnect
           </button>
