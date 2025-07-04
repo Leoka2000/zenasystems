@@ -13,11 +13,9 @@ const App = () => {
   const [characteristic, setCharacteristic] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
 
-  // Function to convert hexadecimal string to decimal and divide by 10
+  // Function to convert hexadecimal string to decimal
   const parseAndConvertHex = useCallback((hexString) => {
     try {
-      // Example hex string: "0x686524C01D0000000000000000000000000000000000000000000000000"
-      // Remove "0x" prefix
       const cleanHexString = hexString.startsWith("0x")
         ? hexString.substring(2)
         : hexString;
@@ -31,15 +29,38 @@ const App = () => {
       const rawTimestampDecimal = parseInt(timestampHex, 16);
       const rawTemperatureDecimal = parseInt(temperatureHex, 16);
 
-      // Divide by 10 for human readability
-      const readableTimestamp = rawTimestampDecimal / 10;
+      // Only divide temperature by 10 (keep timestamp as raw value)
       const readableTemperature = rawTemperatureDecimal / 10;
 
-      return { readableTimestamp, readableTemperature };
+      return {
+        readableTimestamp: rawTimestampDecimal,
+        readableTemperature,
+      };
     } catch (error) {
       console.error("Error parsing hex string:", error);
       throw new Error("Failed to parse data from device");
     }
+  }, []);
+
+  // Format timestamp to CET timezone with correct hours, minutes, seconds
+  const formatTimestamp = useCallback((timestamp) => {
+    if (!timestamp) return "N/A";
+
+    const date = new Date(timestamp * 1000);
+
+    // Options for CET timezone display
+    const options = {
+      timeZone: "Europe/Paris", // CET timezone
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    };
+
+    return new Intl.DateTimeFormat("en-GB", options).format(date);
   }, []);
 
   // Handler for characteristic value changes
@@ -303,7 +324,7 @@ const App = () => {
             <p className="text-2xl text-gray-700">
               Timestamp:{" "}
               <span className="font-bold text-green-700">
-                {new Date(timestamp * 1000).toLocaleString()}
+                {formatTimestamp(timestamp)}
               </span>
             </p>
           )}
