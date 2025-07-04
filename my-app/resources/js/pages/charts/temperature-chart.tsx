@@ -17,7 +17,13 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 
+
+interface ChartLineInteractiveProps {
+  temperature:any;
+  timestamp: any;
+}
 export const description = "An interactive line chart"
+
 
 const chartData = [
   { date: "2024-04-01", desktop: 222, mobile: 150 },
@@ -127,9 +133,17 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function ChartLineInteractive() {
+export const ChartLineInteractive = ({
+  temperature,
+  timestamp,
+}) => {
   const [activeChart, setActiveChart] =
     React.useState<keyof typeof chartConfig>("desktop")
+
+  React.useEffect(() => {
+    console.log("Temperature:", temperature);
+    console.log("Timestamp:", timestamp);
+  }, [temperature, timestamp]);
 
   const total = React.useMemo(
     () => ({

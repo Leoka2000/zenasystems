@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { ChartLineInteractive } from "../charts/temperature-chart";
 
 // Define the UUIDs provided by the user
 const SERVICE_UUID = "12345678-1234-1234-1234-1234567890ab";
 const CHARACTERISTIC_UUID = "abcdefab-1234-5678-9abc-def123456789";
 
 // Main App component
-const App = () => {
+
+const BluetoothTemperature = () => {
   const [temperature, setTemperature] = useState(null);
   const [timestamp, setTimestamp] = useState(null);
   const [status, setStatus] = useState("Disconnected");
@@ -301,55 +303,52 @@ const App = () => {
   }, [isConnected, fullDisconnectCleanup]);
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 font-sans">
-      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md text-center">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">
-          Bluetooth Sensor Data
-        </h1>
-
-        <div className="mb-6">
-          <p className="text-lg text-gray-600 mb-2">
-            Status:{" "}
-            <span className="font-semibold text-blue-600">{status}</span>
+    <div className="">
+      <h1 className="text-lg font-bold text-gray-800 mb-6">
+        Bluetooth Sensor Data
+      </h1>
+      <div className="mb-6">
+        <p className="text-lg text-gray-600 mb-2">
+          Status: <span className="font-semibold text-blue-600">{status}</span>
+        </p>
+        {temperature !== null && (
+          <p className="text-lg text-gray-700 font-xs mb-2">
+            Temperature:{" "}
+            <span className="font-bold font-xs text-indigo-700">
+              {temperature.toFixed(2)} °C
+            </span>
           </p>
-          {temperature !== null && (
-            <p className="text-2xl text-gray-700 mb-2">
-              Temperature:{" "}
-              <span className="font-bold text-indigo-700">
-                {temperature.toFixed(2)} °C
-              </span>
-            </p>
-          )}
-          {timestamp !== null && (
-            <p className="text-2xl text-gray-700">
-              Timestamp:{" "}
-              <span className="font-bold text-green-700">
-                {formatTimestamp(timestamp)}
-              </span>
-            </p>
-          )}
-        </div>
-
-        <div className="flex flex-col space-y-4">
-          {!isConnected ? (
-            <button
-              onClick={connectBluetooth}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-            >
-              Connect to Bluetooth Device
-            </button>
-          ) : (
-            <button
-              onClick={disconnectBluetooth}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-            >
-              Disconnect
-            </button>
-          )}
-        </div>
+        )}
+        {timestamp !== null && (
+          <p className="text-lg text-gray-700">
+            Timestamp:{" "}
+            <span className="font-bold text-green-700">
+              {formatTimestamp(timestamp)}
+            </span>
+          </p>
+        )}
       </div>
+      <div className="flex flex-col font-sm space-y-2">
+        {!isConnected ? (
+          <button
+            onClick={connectBluetooth}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+          >
+            Connect to Bluetooth Device
+          </button>
+        ) : (
+          <button
+            onClick={disconnectBluetooth}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+          >
+            Disconnect
+          </button>
+        )}
+      </div>
+
+      <ChartLineInteractive temperature={temperature} timestamp={timestamp} />
     </div>
   );
 };
 
-export default App;
+export default BluetoothTemperature;
