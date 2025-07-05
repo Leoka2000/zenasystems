@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { ChartLineInteractive } from "../charts/temperature-chart";
+import api from "./api";
 import {
   Button,
   Card,
@@ -72,7 +73,7 @@ const BluetoothTemperature = () => {
 
   // Handler for characteristic value changes
   const handleCharacteristicValueChanged = useCallback(
-    (event) => {
+    async (event) => {
       try {
         const value = event.target.value;
         let hexString = "0x";
@@ -83,9 +84,16 @@ const BluetoothTemperature = () => {
         const { readableTimestamp, readableTemperature } = parseAndConvertHex(
           hexString
         );
+
         setTimestamp(readableTimestamp);
         setTemperature(readableTemperature);
         setStatus("Receiving data...");
+
+        // SEND DATA TO BACKEND
+        await api.post("/temperature", {
+          temperature: readableTemperature,
+          timestamp: readableTimestamp,
+        });
       } catch (error) {
         console.error("Error handling characteristic value:", error);
         setStatus(`Error: ${error.message}`);

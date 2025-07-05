@@ -111,9 +111,9 @@ export const ChartLineInteractive = ({
       <CardHeader className="flex flex-col items-stretch border-b !p-0 sm:flex-row">
         <div className="flex flex-1 flex-col justify-center gap-1 py-4 mb-4 px-6 pb-3 sm:pb-0">
           <CardTitle>Temperature Monitor</CardTitle>
-          <CardDescription>
-            Real-time temperature readings from Bluetooth device
-          </CardDescription>
+
+           <p className="leading-4 text-sm py-1 "> Real-time temperature readings from Bluetooth device.</p>
+
         </div>
         <div className="grid grid-cols-2 gap-1 w-full px-6 py-4">
           <div className="flex flex-col gap-1">

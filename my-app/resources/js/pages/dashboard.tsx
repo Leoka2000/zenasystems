@@ -6,7 +6,7 @@ import { Head } from '@inertiajs/react';
 import BluetoothTemperature from './bluetooth/bluetooth';
 // Update the import path below to match the actual location and filename of your temperature-chart component.
 // For example, if the file is named TemperatureChart.tsx in the same directory, use:
-import { ChartLineInteractive } from "./charts/temperature-chart";
+
 // Or, if the file is in a different location, adjust the path accordingly.
 
 const breadcrumbs: BreadcrumbItem[] = [
