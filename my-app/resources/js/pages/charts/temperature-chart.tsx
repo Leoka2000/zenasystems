@@ -109,7 +109,7 @@ export const ChartLineInteractive = ({
   return (
     <Card className="py-4 sm:py-0">
       <CardHeader className="flex flex-col items-stretch border-b !p-0 sm:flex-row">
-        <div className="flex flex-1 flex-col justify-center gap-1 px-6 pb-3 sm:pb-0">
+        <div className="flex flex-1 flex-col justify-center gap-1 py-4 mb-4 px-6 pb-3 sm:pb-0">
           <CardTitle>Temperature Monitor</CardTitle>
           <CardDescription>
             Real-time temperature readings from Bluetooth device
@@ -117,7 +117,7 @@ export const ChartLineInteractive = ({
         </div>
         <div className="grid grid-cols-2 gap-1 w-full px-6 py-4">
           <div className="flex flex-col gap-1">
-            <span className="text-muted-foreground mb-4 text-xs">Current</span>
+            <span className="text-muted-foreground text-xs">Current</span>
             <span className="text-lg font-bold sm:text-xl">
               {stats.current !== null ? `${stats.current.toFixed(2)} °C` : "N/A"}
             </span>
