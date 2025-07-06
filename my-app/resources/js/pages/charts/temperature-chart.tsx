@@ -139,19 +139,19 @@ export const ChartLineInteractive = ({
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           <div>
             <p className="text-xs text-muted-foreground">Current</p>
-            <p className="text-lg font-bold">{stats.current !== null ? `${stats.current.toFixed(2)} °C` : "N/A"}</p>
+            <p className="text-lg font-bold">{stats.current !== null ? `${stats.current.toFixed(2)} °C` : ""}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Average</p>
-            <p className="text-lg font-bold">{stats.average !== null ? `${stats.average.toFixed(2)} °C` : "N/A"}</p>
+            <p className="text-lg font-bold">{stats.average !== null ? `${stats.average.toFixed(2)} °C` : ""}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Min</p>
-            <p className="text-lg font-bold">{stats.min !== null ? `${stats.min.toFixed(2)} °C` : "N/A"}</p>
+            <p className="text-lg font-bold">{stats.min !== null ? `${stats.min.toFixed(2)} °C` : ""}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Max</p>
-            <p className="text-lg font-bold">{stats.max !== null ? `${stats.max.toFixed(2)} °C` : "N/A"}</p>
+            <p className="text-lg font-bold">{stats.max !== null ? `${stats.max.toFixed(2)} °C` : ""}</p>
           </div>
         </div>
 

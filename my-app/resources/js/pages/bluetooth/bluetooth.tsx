@@ -141,21 +141,16 @@ const BluetoothTemperature = () => {
     }
   }, []);
 
-  // Function to perform full disconnection cleanup
   const fullDisconnectCleanup = useCallback(async () => {
     console.log("Performing full disconnect cleanup...");
 
-    // Save references in case state changes during cleanup
     const currentChar = characteristic;
     const currentDevice = device;
 
-    // 1. Remove characteristic listener
     removeCharacteristicListeners(currentChar);
 
-    // 2. Stop notifications if possible
     await safelyStopNotifications(currentChar);
 
-    // 3. Disconnect from device if connected
     if (currentDevice && currentDevice.gatt && currentDevice.gatt.connected) {
       try {
         console.log("Disconnecting GATT server...");
