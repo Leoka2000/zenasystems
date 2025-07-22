@@ -12,7 +12,7 @@ class AuthMobileController extends Controller
     function Register(Request $R)
     {
         try {
-            // Validate request
+          
             $R->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',

@@ -50,6 +50,24 @@ const BluetoothTemperature = () => {
     }
   }, []);
 
+  const sendWriteCommand = useCallback(async () => {
+  if (!characteristic) {
+    setStatus("No characteristic available to write");
+    return;
+  }
+
+  try {
+    // Example payload: send 0x01 as a single byte
+    const value = new Uint8Array([0x01]); // you can modify this to match your device spec
+
+    await characteristic.writeValueWithoutResponse(value);
+    setStatus("Write successful!");
+  } catch (error) {
+    console.error("Write error:", error);
+    setStatus(`Write failed: ${error.message}`);
+  }
+}, [characteristic]);
+
   // Format timestamp to CET timezone with correct hours, minutes, seconds
   const formatTimestamp = useCallback((timestamp) => {
     if (!timestamp) return "N/A";
@@ -358,7 +376,17 @@ const BluetoothTemperature = () => {
           >
             Disconnect
           </button>
+
+          
         )}
+        {isConnected && (
+  <button
+    onClick={sendWriteCommand}
+    className="bg-green-600 hover:bg-green-700 max-w-2xs dark:bg-green-500 dark:hover:bg-green-600 text-white font-bold py-2 px-3 rounded-lg text-base shadow-md transition transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+  >
+    Send Write Request
+  </button>
+)}
       </div>
 
       <ChartLineInteractive temperature={temperature} timestamp={timestamp} />
