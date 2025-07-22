@@ -1,17 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { ChartLineInteractive } from "../charts/temperature-chart";
 import api from "./api";
-import {
-  Button,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/button";
 // Define the Bluetooth service and characteristic UUIDs
-const SERVICE_UUID = "12345678-1234-1234-1234-1234567890ab";
-const CHARACTERISTIC_UUID = "abcdefab-1234-5678-9abc-def123456789";
+const SERVICE_UUID = "11111111-1111-1111-1111-111111111111";
+const CHARACTERISTIC_UUID = "22222222-2222-2222-2222-222222222222";
 
 const BluetoothTemperature = () => {
   const [temperature, setTemperature] = useState(null);
