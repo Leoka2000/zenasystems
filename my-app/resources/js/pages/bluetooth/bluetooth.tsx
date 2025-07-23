@@ -172,61 +172,60 @@ const App = () => {
     };
   }, [disconnectBluetooth]);
 
-  return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4 font-sans">
-      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md text-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">
-          Bluetooth Sensor Data
-        </h1>
+return (
+  <div className="p-4 mb-2 dark:bg-black h-full rounded-lg shadow-md  mx-auto">
+    <h1 className="text-base font-bold text-gray-800 dark:text-gray-200 mb-6">
+      Bluetooth Sensor Data
+    </h1>
 
-        <div className="mb-6">
-          <p className="text-lg text-gray-600 mb-2">
-            Status:{" "}
-            <span className="font-semibold text-blue-600">{status}</span>
-          </p>
-          {temperature !== null && (
-            <p className="text-2xl text-gray-700 mb-2">
-              Temperature:{" "}
-              <span className="font-bold text-indigo-700">
-                {temperature.toFixed(2)} °C
-              </span>
-            </p>
-          )}
-          {timestamp !== null && (
-            <p className="text-2xl text-gray-700">
-              Timestamp:{" "}
-              <span className="font-bold text-green-700">
-                {formatTimestamp(timestamp)}
-              </span>
-            </p>
-          )}
-        </div>
+    <div className="mb-6">
+      <p className="text-base text-gray-600 dark:text-gray-400 mb-2">
+        Status:{" "}
+        <span className="font-semibold text-base text-gray-700 dark:text-gray-400">
+          {status}
+        </span>
+      </p>
 
-        <div className="flex flex-col space-y-4">
-          {!isConnected ? (
-            <button
-              onClick={connectBluetooth}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-            >
-              Connect to Bluetooth Device
-            </button>
-          ) : (
-            <button
-              onClick={disconnectBluetooth}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-            >
-              Disconnect
-            </button>
-          )}
-        </div>
-      </div>
+      {temperature !== null && (
+        <p className="text-base text-gray-700 dark:text-gray-300 mb-2">
+          Temperature:{" "}
+          <span className="font-bold text-base text-orange-700 dark:text-orange-400">
+            {temperature.toFixed(2)} °C
+          </span>
+        </p>
+      )}
 
-      {/* ✅ Add Chart here */}
-      <div className="w-full max-w-3xl">
-        <ChartLineInteractive temperature={temperature} timestamp={timestamp} />
-      </div>
+      {timestamp !== null && (
+        <p className="text-base text-gray-700 dark:text-gray-300">
+          Timestamp:{" "}
+          <span className="font-bold text-gray-600 dark:text-gray-400">
+            {formatTimestamp(timestamp)}
+          </span>
+        </p>
+      )}
     </div>
-  );
-};
+
+    <div className="flex flex-col mb-4 font-sm space-y-2">
+      {!isConnected ? (
+        <button
+          onClick={connectBluetooth}
+          className="bg-blue-600 hover:bg-blue-700 max-w-2xs dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-lg text-base shadow-md transition transform hover:scale-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+        >
+          Connect to Bluetooth Device
+        </button>
+      ) : (
+        <button
+          onClick={disconnectBluetooth}
+          className="bg-red-600 hover:bg-red-700 max-w-2xs dark:bg-red-500 dark:hover:bg-red-600 text-white font-bold py-2 px-3 rounded-lg text-base shadow-md transition transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+        >
+          Disconnect
+        </button>
+      )}
+    </div>
+
+    {/* ✅ Chart aligned visually with data */}
+    <ChartLineInteractive temperature={temperature} timestamp={timestamp} />
+  </div>
+);};
 
 export default App;
