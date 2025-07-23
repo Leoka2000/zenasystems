@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { ChartLineInteractive } from "../charts/temperature-chart"; // Make sure this path is correct
+import api from "./api"; // Adjust if it's in a different location
 
 const SERVICE_UUID = "11111111-1111-1111-1111-111111111111";
 const READ_NOTIFY_CHARACTERISTIC_UUID = "22222222-2222-2222-2222-222222222222";
@@ -45,7 +47,7 @@ const App = () => {
     }).format(date);
   }, []);
 
-  const handleCharacteristicValueChanged = useCallback((event) => {
+  const handleCharacteristicValueChanged = useCallback(async (event) => {
     const value = event.target.value;
     let hexString = "0x";
     for (let i = 0; i < value.byteLength; i++) {
@@ -54,10 +56,22 @@ const App = () => {
 
     console.log("🔄 Response from device:", hexString);
 
-    const { readableTimestamp, readableTemperature } = parseAndConvertHex(hexString);
-    setTimestamp(readableTimestamp);
-    setTemperature(readableTemperature);
-    setStatus("Receiving data...");
+    try {
+      const { readableTimestamp, readableTemperature } = parseAndConvertHex(hexString);
+
+      setTimestamp(readableTimestamp);
+      setTemperature(readableTemperature);
+      setStatus("Receiving data...");
+
+      // ✅ Send to backend
+      await api.post("/temperature", {
+        temperature: readableTemperature,
+        timestamp: readableTimestamp,
+      });
+    } catch (error) {
+      console.error("Error handling device data:", error);
+      setStatus("Failed to process data");
+    }
   }, [parseAndConvertHex]);
 
   const sendWriteRequest = useCallback(async () => {
@@ -78,7 +92,7 @@ const App = () => {
   }, []);
 
   const startWriteInterval = useCallback(() => {
-    writeIntervalRef.current = setInterval(sendWriteRequest, 1000);
+    writeIntervalRef.current = setInterval(sendWriteRequest, 5000);
   }, [sendWriteRequest]);
 
   const stopWriteInterval = useCallback(() => {
@@ -119,8 +133,7 @@ const App = () => {
       setStatus("Connected and receiving data");
       setIsConnected(true);
 
-      // Start periodic writing
-      sendWriteRequest(); // initial write
+      sendWriteRequest(); // Initial write
       startWriteInterval();
     } catch (error) {
       console.error("Bluetooth connection error:", error);
@@ -160,8 +173,8 @@ const App = () => {
   }, [disconnectBluetooth]);
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 font-sans">
-      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md text-center">
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4 font-sans">
+      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md text-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800 mb-6">
           Bluetooth Sensor Data
         </h1>
@@ -206,6 +219,11 @@ const App = () => {
             </button>
           )}
         </div>
+      </div>
+
+      {/* ✅ Add Chart here */}
+      <div className="w-full max-w-3xl">
+        <ChartLineInteractive temperature={temperature} timestamp={timestamp} />
       </div>
     </div>
   );
