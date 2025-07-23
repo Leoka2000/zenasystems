@@ -9,30 +9,21 @@ const App = () => {
   const [timestamp, setTimestamp] = useState(null);
   const [status, setStatus] = useState("Disconnected");
   const [device, setDevice] = useState(null);
-  const [readCharacteristic, setReadCharacteristic] = useState(null);
-  const [writeCharacteristic, setWriteCharacteristic] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
-
+  const notifyCharRef = useRef(null);
+  const writeCharRef = useRef(null);
   const writeIntervalRef = useRef(null);
 
   const parseAndConvertHex = useCallback((hexString) => {
     try {
-      const cleanHexString = hexString.startsWith("0x")
-        ? hexString.substring(2)
-        : hexString;
+      const cleanHex = hexString.startsWith("0x") ? hexString.slice(2) : hexString;
+      const timestampHex = cleanHex.slice(0, 8);
+      const temperatureHex = cleanHex.slice(8, 12);
 
-      const timestampHex = cleanHexString.substring(0, 8);
-      const temperatureHex = cleanHexString.substring(8, 12);
+      const readableTimestamp = parseInt(timestampHex, 16);
+      const readableTemperature = parseInt(temperatureHex, 16) / 10;
 
-      const rawTimestampDecimal = parseInt(timestampHex, 16);
-      const rawTemperatureDecimal = parseInt(temperatureHex, 16);
-
-      const readableTemperature = rawTemperatureDecimal / 10;
-
-      return {
-        readableTimestamp: rawTimestampDecimal,
-        readableTemperature,
-      };
+      return { readableTimestamp, readableTemperature };
     } catch (error) {
       console.error("Error parsing hex string:", error);
       throw new Error("Failed to parse data from device");
@@ -42,7 +33,7 @@ const App = () => {
   const formatTimestamp = useCallback((timestamp) => {
     if (!timestamp) return "N/A";
     const date = new Date(timestamp * 1000);
-    const options = {
+    return new Intl.DateTimeFormat("en-GB", {
       timeZone: "Europe/Paris",
       year: "numeric",
       month: "2-digit",
@@ -51,99 +42,51 @@ const App = () => {
       minute: "2-digit",
       second: "2-digit",
       hour12: false,
-    };
-    return new Intl.DateTimeFormat("en-GB", options).format(date);
+    }).format(date);
   }, []);
 
-  const handleCharacteristicValueChanged = useCallback(
-    (event) => {
-      try {
-        const value = event.target.value;
-        let hexString = "0x";
-        for (let i = 0; i < value.byteLength; i++) {
-          hexString += ("00" + value.getUint8(i).toString(16)).slice(-2);
-        }
+  const handleCharacteristicValueChanged = useCallback((event) => {
+    const value = event.target.value;
+    let hexString = "0x";
+    for (let i = 0; i < value.byteLength; i++) {
+      hexString += ("00" + value.getUint8(i).toString(16)).slice(-2);
+    }
 
-        const { readableTimestamp, readableTemperature } =
-          parseAndConvertHex(hexString);
+    console.log("🔄 Response from device:", hexString);
 
-        setTimestamp(readableTimestamp);
-        setTemperature(readableTemperature);
-        setStatus("Receiving data...");
-      } catch (error) {
-        console.error("Error handling characteristic value:", error);
-        setStatus(`Error: ${error.message}`);
-      }
-    },
-    [parseAndConvertHex]
-  );
+    const { readableTimestamp, readableTemperature } = parseAndConvertHex(hexString);
+    setTimestamp(readableTimestamp);
+    setTemperature(readableTemperature);
+    setStatus("Receiving data...");
+  }, [parseAndConvertHex]);
+
+  const sendWriteRequest = useCallback(async () => {
+    if (!writeCharRef.current) return;
+
+    const unixTimestamp = Math.floor(Date.now() / 1000);
+    const buffer = new ArrayBuffer(4);
+    const view = new DataView(buffer);
+    view.setUint32(0, unixTimestamp, false); // Big-endian
+
+    console.log("✉️ Writing timestamp:", `0x${unixTimestamp.toString(16).toUpperCase()}`);
+
+    try {
+      await writeCharRef.current.writeValue(buffer);
+    } catch (error) {
+      console.error("Write error:", error);
+    }
+  }, []);
 
   const startWriteInterval = useCallback(() => {
-    if (!writeCharacteristic) return;
+    writeIntervalRef.current = setInterval(sendWriteRequest, 1000);
+  }, [sendWriteRequest]);
 
-    writeIntervalRef.current = setInterval(async () => {
-      const currentUnixTimestamp = Math.floor(Date.now() / 1000);
-      const buffer = new ArrayBuffer(4);
-      const view = new DataView(buffer);
-      view.setUint32(0, currentUnixTimestamp, false); // Big-endian
-
-      try {
-        await writeCharacteristic.writeValue(buffer);
-        console.log("Wrote timestamp:", "0x" + currentUnixTimestamp.toString(16));
-      } catch (error) {
-        console.error("Error writing timestamp:", error);
-      }
-    }, 1000); // every second
-  }, [writeCharacteristic]);
-
-  const stopWriteInterval = () => {
+  const stopWriteInterval = useCallback(() => {
     if (writeIntervalRef.current) {
       clearInterval(writeIntervalRef.current);
       writeIntervalRef.current = null;
     }
-  };
-
-  const resetConnectionState = useCallback(() => {
-    stopWriteInterval();
-    setStatus("Disconnected");
-    setTemperature(null);
-    setTimestamp(null);
-    setIsConnected(false);
   }, []);
-
-  const fullDisconnectCleanup = useCallback(async () => {
-    const currentDevice = device;
-    if (readCharacteristic) {
-      try {
-        readCharacteristic.removeEventListener(
-          "characteristicvaluechanged",
-          handleCharacteristicValueChanged
-        );
-        await readCharacteristic.stopNotifications();
-      } catch (e) {
-        console.warn("Cleanup error:", e);
-      }
-    }
-
-    if (currentDevice?.gatt?.connected) {
-      try {
-        currentDevice.gatt.disconnect();
-      } catch (e) {
-        console.warn("Disconnection error:", e);
-      }
-    }
-
-    setReadCharacteristic(null);
-    setWriteCharacteristic(null);
-    setDevice(null);
-    resetConnectionState();
-  }, [device, readCharacteristic, handleCharacteristicValueChanged, resetConnectionState]);
-
-  const handleDisconnectedEvent = useCallback(() => {
-    console.log("Disconnected unexpectedly");
-    setStatus("Disconnected unexpectedly");
-    fullDisconnectCleanup();
-  }, [fullDisconnectCleanup]);
 
   const connectBluetooth = useCallback(async () => {
     if (!navigator.bluetooth) {
@@ -152,74 +95,96 @@ const App = () => {
     }
 
     try {
-      setStatus("Requesting device...");
+      setStatus("Requesting Bluetooth device...");
       const selectedDevice = await navigator.bluetooth.requestDevice({
         filters: [{ services: [SERVICE_UUID] }],
         optionalServices: [SERVICE_UUID],
       });
 
       setDevice(selectedDevice);
-      selectedDevice.addEventListener("gattserverdisconnected", handleDisconnectedEvent);
-
+      setStatus("Connecting to GATT server...");
       const server = await selectedDevice.gatt.connect();
+
       const service = await server.getPrimaryService(SERVICE_UUID);
 
+      const notifyChar = await service.getCharacteristic(READ_NOTIFY_CHARACTERISTIC_UUID);
       const writeChar = await service.getCharacteristic(WRITE_CHARACTERISTIC_UUID);
-      const readChar = await service.getCharacteristic(READ_NOTIFY_CHARACTERISTIC_UUID);
 
-      setWriteCharacteristic(writeChar);
-      setReadCharacteristic(readChar);
+      notifyCharRef.current = notifyChar;
+      writeCharRef.current = writeChar;
 
-      readChar.addEventListener("characteristicvaluechanged", handleCharacteristicValueChanged);
-      await readChar.startNotifications();
+      notifyChar.addEventListener("characteristicvaluechanged", handleCharacteristicValueChanged);
+      await notifyChar.startNotifications();
 
-      setStatus("Connected");
+      setStatus("Connected and receiving data");
       setIsConnected(true);
 
+      // Start periodic writing
+      sendWriteRequest(); // initial write
       startWriteInterval();
     } catch (error) {
       console.error("Bluetooth connection error:", error);
       setStatus(`Connection failed: ${error.message}`);
-      fullDisconnectCleanup();
     }
-  }, [handleDisconnectedEvent, handleCharacteristicValueChanged, fullDisconnectCleanup, startWriteInterval]);
+  }, [handleCharacteristicValueChanged, sendWriteRequest, startWriteInterval]);
 
   const disconnectBluetooth = useCallback(async () => {
-    if (!isConnected) {
-      setStatus("Already disconnected");
-      return;
+    setStatus("Disconnecting...");
+
+    stopWriteInterval();
+
+    if (notifyCharRef.current) {
+      try {
+        await notifyCharRef.current.stopNotifications();
+        notifyCharRef.current.removeEventListener("characteristicvaluechanged", handleCharacteristicValueChanged);
+      } catch (error) {
+        console.warn("Error cleaning up notifications:", error);
+      }
     }
 
-    setStatus("Disconnecting...");
-    await fullDisconnectCleanup();
-    setStatus("Disconnected by user");
-  }, [isConnected, fullDisconnectCleanup]);
+    if (device?.gatt?.connected) {
+      device.gatt.disconnect();
+    }
+
+    setIsConnected(false);
+    setTemperature(null);
+    setTimestamp(null);
+    setDevice(null);
+    setStatus("Disconnected");
+  }, [device, handleCharacteristicValueChanged, stopWriteInterval]);
 
   useEffect(() => {
     return () => {
-      if (isConnected) {
-        fullDisconnectCleanup();
-      }
+      disconnectBluetooth();
     };
-  }, [isConnected, fullDisconnectCleanup]);
+  }, [disconnectBluetooth]);
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 font-sans">
       <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md text-center">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Bluetooth Sensor Data</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-6">
+          Bluetooth Sensor Data
+        </h1>
 
         <div className="mb-6">
           <p className="text-lg text-gray-600 mb-2">
-            Status: <span className="font-semibold text-blue-600">{status}</span>
+            Status:{" "}
+            <span className="font-semibold text-blue-600">{status}</span>
           </p>
           {temperature !== null && (
             <p className="text-2xl text-gray-700 mb-2">
-              Temperature: <span className="font-bold text-indigo-700">{temperature.toFixed(2)} °C</span>
+              Temperature:{" "}
+              <span className="font-bold text-indigo-700">
+                {temperature.toFixed(2)} °C
+              </span>
             </p>
           )}
           {timestamp !== null && (
             <p className="text-2xl text-gray-700">
-              Timestamp: <span className="font-bold text-green-700">{formatTimestamp(timestamp)}</span>
+              Timestamp:{" "}
+              <span className="font-bold text-green-700">
+                {formatTimestamp(timestamp)}
+              </span>
             </p>
           )}
         </div>
