@@ -49,16 +49,24 @@ const BluetoothTemperature = () => {
   }
 
   try {
-    // Example payload: send 0x01 as a single byte
-    const value = new Uint8Array([0x01]); // you can modify this to match your device spec
+    // Prepare a 16-byte buffer
+    const hexValue = "555555";
+    const data = new Uint8Array(16).fill(0);
 
-    await characteristic.writeValueWithoutResponse(value);
-    setStatus("Write successful!");
+    // Fill the first bytes with the hex value
+    const hexBytes = hexValue.match(/.{1,2}/g); // Split into byte-sized chunks
+    hexBytes.forEach((byte, index) => {
+      data[index] = parseInt(byte, 16);
+    });
+
+    await characteristic.writeValueWithoutResponse(data);
+    setStatus("Write successful! Sent: 555555");
   } catch (error) {
     console.error("Write error:", error);
     setStatus(`Write failed: ${error.message}`);
   }
 }, [characteristic]);
+
 
   // Format timestamp to CET timezone with correct hours, minutes, seconds
   const formatTimestamp = useCallback((timestamp) => {
