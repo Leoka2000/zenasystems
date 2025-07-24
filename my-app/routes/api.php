@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\TemperatureController;
+use App\Http\Controllers\AccelerometerController;
 use App\Http\Controllers\AuthMobileController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -9,6 +10,9 @@ use Illuminate\Http\Request;
 
 Route::post('/temperature', [TemperatureController::class, 'store']);
 Route::get('/temperatures', [TemperatureController::class, 'history']);
+
+Route::post('/accelerometer', [AccelerometerController::class, 'store']);
+Route::get('/accelerometers', [AccelerometerController::class, 'history']);
 
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
