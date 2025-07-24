@@ -4,6 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import BluetoothTemperature from './bluetooth/bluetooth';
+import Accelerometer from './bluetooth/accelerometer';
 // Update the import path below to match the actual location and filename of your temperature-chart component.
 // For example, if the file is named TemperatureChart.tsx in the same directory, use:
 
@@ -36,7 +37,12 @@ export default function Dashboard() {
                 </div>
                 <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border dark:border-2 border-sidebar-border/70 md:min-h-min dark:bg-neutral-950 bg-gray-50  dark:border-sidebar-border">
                     <PlaceholderPattern className="absolute inset-0 size-full " />
-      <BluetoothTemperature />
+     {/*<BluetoothTemperature />*/} 
+
+                </div>
+                 <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border dark:border-2 border-sidebar-border/70 md:min-h-min dark:bg-neutral-950 bg-gray-50  dark:border-sidebar-border">
+                    <PlaceholderPattern className="absolute inset-0 size-full " />
+      <Accelerometer />
 
                 </div>
             </div>

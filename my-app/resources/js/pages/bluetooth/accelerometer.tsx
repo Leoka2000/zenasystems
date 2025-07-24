@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { ChartLineInteractive } from "../charts/temperature-chart"; // Make sure this path is correct
-import api from "./api"; // Adjust if it's in a different location
+import api from "./api";
 
 const SERVICE_UUID = "11111111-1111-1111-1111-111111111111";
 const READ_NOTIFY_CHARACTERISTIC_UUID = "22222222-2222-2222-2222-222222222222";
 const WRITE_CHARACTERISTIC_UUID = "44444444-4444-4444-4444-444444444444";
 
-const TemperatureProvider = () => {
-  const [temperature, setTemperature] = useState(null);
+const SensorDataDisplay = () => {
   const [timestamp, setTimestamp] = useState(null);
+  const [accelerometer, setAccelerometer] = useState({ x: null, y: null, z: null });
   const [status, setStatus] = useState("Disconnected");
   const [device, setDevice] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -17,20 +16,22 @@ const TemperatureProvider = () => {
   const writeCharRef = useRef(null);
   const writeIntervalRef = useRef(null);
 
-  const parseAndConvertHex = useCallback((hexString) => {
-    try {
-      const cleanHex = hexString.startsWith("0x") ? hexString.slice(2) : hexString;
-      const timestampHex = cleanHex.slice(0, 8);
-      const temperatureHex = cleanHex.slice(8, 12);
+  const parseHexData = useCallback((hexString) => {
+    const cleanHex = hexString.startsWith("0x") ? hexString.slice(2) : hexString;
 
-      const readableTimestamp = parseInt(timestampHex, 16);
-      const readableTemperature = parseInt(temperatureHex, 16) / 10;
+    const timestampHex = cleanHex.slice(0, 8);
+    const accelXHex = cleanHex.slice(12, 16);
+    const accelYHex = cleanHex.slice(16, 20);
+    const accelZHex = cleanHex.slice(20, 24);
 
-      return { readableTimestamp, readableTemperature };
-    } catch (error) {
-      console.error("Error parsing hex string:", error);
-      throw new Error("Failed to parse data from device");
-    }
+    const readableTimestamp = parseInt(timestampHex, 16);
+
+    // Convert to signed 16-bit integers
+    const x = parseInt(accelXHex, 16) << 16 >> 16;
+    const y = parseInt(accelYHex, 16) << 16 >> 16;
+    const z = parseInt(accelZHex, 16) << 16 >> 16;
+
+    return { timestamp: readableTimestamp, x, y, z };
   }, []);
 
   const formatTimestamp = useCallback((timestamp) => {
@@ -58,22 +59,16 @@ const TemperatureProvider = () => {
     console.log("🔄 Response from device:", hexString);
 
     try {
-      const { readableTimestamp, readableTemperature } = parseAndConvertHex(hexString);
+      const { timestamp, x, y, z } = parseHexData(hexString);
 
-      setTimestamp(readableTimestamp);
-      setTemperature(readableTemperature);
+      setTimestamp(timestamp);
+      setAccelerometer({ x, y, z });
       setStatus("Receiving data...");
-
-      // ✅ Send to backend
-      await api.post("/temperature", {
-        temperature: readableTemperature,
-        timestamp: readableTimestamp,
-      });
     } catch (error) {
-      console.error("Error handling device data:", error);
+      console.error("Error parsing device data:", error);
       setStatus("Failed to process data");
     }
-  }, [parseAndConvertHex]);
+  }, [parseHexData]);
 
   const sendWriteRequest = useCallback(async () => {
     if (!writeCharRef.current) return;
@@ -121,7 +116,6 @@ const TemperatureProvider = () => {
       const server = await selectedDevice.gatt.connect();
 
       const service = await server.getPrimaryService(SERVICE_UUID);
-
       const notifyChar = await service.getCharacteristic(READ_NOTIFY_CHARACTERISTIC_UUID);
       const writeChar = await service.getCharacteristic(WRITE_CHARACTERISTIC_UUID);
 
@@ -134,7 +128,7 @@ const TemperatureProvider = () => {
       setStatus("Connected and receiving data");
       setIsConnected(true);
 
-      sendWriteRequest(); // Initial write
+      sendWriteRequest(); // initial
       startWriteInterval();
     } catch (error) {
       console.error("Bluetooth connection error:", error);
@@ -144,7 +138,6 @@ const TemperatureProvider = () => {
 
   const disconnectBluetooth = useCallback(async () => {
     setStatus("Disconnecting...");
-
     stopWriteInterval();
 
     if (notifyCharRef.current) {
@@ -152,7 +145,7 @@ const TemperatureProvider = () => {
         await notifyCharRef.current.stopNotifications();
         notifyCharRef.current.removeEventListener("characteristicvaluechanged", handleCharacteristicValueChanged);
       } catch (error) {
-        console.warn("Error cleaning up notifications:", error);
+        console.warn("Notification cleanup error:", error);
       }
     }
 
@@ -161,8 +154,8 @@ const TemperatureProvider = () => {
     }
 
     setIsConnected(false);
-    setTemperature(null);
     setTimestamp(null);
+    setAccelerometer({ x: null, y: null, z: null });
     setDevice(null);
     setStatus("Disconnected");
   }, [device, handleCharacteristicValueChanged, stopWriteInterval]);
@@ -173,58 +166,52 @@ const TemperatureProvider = () => {
     };
   }, [disconnectBluetooth]);
 
-return (
-  <div className="p-4 mb-2 dark:bg-neutral-950 h-full rounded-lg shadow-md  mx-auto">
-    <h1 className="text-base font-bold text-gray-800 dark:text-gray-200 mb-6">
-      Bluetooth Sensor Data
-    </h1>
+  return (
+    <div className="p-4 mb-2 dark:bg-neutral-950 h-full rounded-lg shadow-md mx-auto">
+      <h1 className="text-base font-bold text-gray-800 dark:text-gray-200 mb-6">
+        Bluetooth Accelerometer Data
+      </h1>
 
-    <div className="mb-6">
-      <p className="text-base text-gray-600 dark:text-gray-400 mb-2">
-        Status:{" "}
-        <span className="font-semibold text-base text-gray-700 dark:text-gray-400">
-          {status}
-        </span>
-      </p>
-
-      {temperature !== null && (
-        <p className="text-base text-gray-700 dark:text-gray-300 mb-2">
-          Temperature:{" "}
-          <span className="font-bold text-base text-orange-700 dark:text-orange-400">
-            {temperature.toFixed(2)} °C
-          </span>
+      <div className="mb-6">
+        <p className="text-base text-gray-600 dark:text-gray-400 mb-2">
+          Status: <span className="font-semibold">{status}</span>
         </p>
-      )}
 
-      {timestamp !== null && (
-        <p className="text-base text-gray-700 dark:text-gray-300">
-          Timestamp:{" "}
-          <span className="font-bold text-gray-600 dark:text-gray-400">
-            {formatTimestamp(timestamp)}
-          </span>
-        </p>
-      )}
+        {timestamp && (
+          <p className="text-base text-gray-700 dark:text-gray-300 mb-2">
+            Timestamp:{" "}
+            <span className="font-bold">{formatTimestamp(timestamp)}</span>
+          </p>
+        )}
+
+        {(accelerometer.x !== null) && (
+          <div className="text-base text-gray-700 dark:text-gray-300 space-y-1">
+            <p>Accelerometer X: <span className="font-bold">{accelerometer.x}</span></p>
+            <p>Accelerometer Y: <span className="font-bold">{accelerometer.y}</span></p>
+            <p>Accelerometer Z: <span className="font-bold">{accelerometer.z}</span></p>
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col mb-4 font-sm space-y-2">
+        {!isConnected ? (
+          <button
+            onClick={connectBluetooth}
+            className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 z-10 dark:hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-lg shadow-md"
+          >
+            Connect to Bluetooth Device
+          </button>
+        ) : (
+          <button
+            onClick={disconnectBluetooth}
+            className="bg-red-600 hover:bg-red-700 dark:bg-red-500 z-10 dark:hover:bg-red-600 text-white font-bold py-2 px-3 rounded-lg shadow-md"
+          >
+            Disconnect
+          </button>
+        )}
+      </div>
     </div>
+  );
+};
 
-    <div className="flex flex-col mb-4 font-sm space-y-2">
-      {!isConnected ? (
-        <button
-          onClick={connectBluetooth}
-          className="bg-blue-600 hover:bg-blue-700 max-w-2xs dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-lg text-base shadow-md transition transform hover:scale-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-        >
-          Connect to Bluetooth Device
-        </button>
-      ) : (
-        <button
-          onClick={disconnectBluetooth}
-          className="bg-red-600 hover:bg-red-700 max-w-2xs dark:bg-red-500 dark:hover:bg-red-600 text-white font-bold py-2 px-3 rounded-lg text-base shadow-md transition transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-        >
-          Disconnect
-        </button>
-      )}
-    </div>
-    <ChartLineInteractive temperature={temperature} timestamp={timestamp} />
-  </div>
-);};
-
-export default TemperatureProvider;
+export default SensorDataDisplay;
