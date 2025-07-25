@@ -37,7 +37,7 @@ export default function Dashboard() {
                 </div>
                 <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border dark:border-2 border-sidebar-border/70 md:min-h-min dark:bg-neutral-950 bg-gray-50  dark:border-sidebar-border">
                     <PlaceholderPattern className="absolute inset-0 size-full " />
-     {/*<BluetoothTemperature />*/} 
+     <BluetoothTemperature />
 
                 </div>
                  <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border dark:border-2 border-sidebar-border/70 md:min-h-min dark:bg-neutral-950 bg-gray-50  dark:border-sidebar-border">

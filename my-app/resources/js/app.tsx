@@ -5,6 +5,8 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
 import { configureEcho } from '@laravel/echo-react';
+import { BluetoothSensorProvider } from './context/useBluetoothSensor'; 
+import { parseHexData } from './lib/utils';
 
 configureEcho({
     broadcaster: 'reverb',
@@ -17,8 +19,16 @@ createInertiaApp({
     resolve: (name) => resolvePageComponent(`./pages/${name}.tsx`, import.meta.glob('./pages/**/*.tsx')),
     setup({ el, App, props }) {
         const root = createRoot(el);
+        
 
-        root.render(<App {...props} />);
+        root.render(
+         <BluetoothSensorProvider
+           parseHexData={parseHexData}
+  endpoint="/api/accelerometer"
+         >
+        <App {...props} />
+         </BluetoothSensorProvider >
+         );
     },
     progress: {
         color: '#6ef998ff',
