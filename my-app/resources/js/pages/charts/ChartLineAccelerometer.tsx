@@ -170,12 +170,7 @@ export const ChartLineAccelerometer = ({ liveData }) => {
                 <ChartTooltipContent
                   className="w-[180px]"
                   nameKey="axis"
-                  labelFormatter={(value) =>
-                    new Date(value * 1000).toLocaleString("en-GB", {
-                      hour12: false, day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"
-                    })
-                  }
-                  valueFormatter={(val, name) => `${val} (${name})`}
+                
                 />
               }
             />
