@@ -1,5 +1,6 @@
-// context/BluetoothSensorContext.tsx
+
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react"
+import { parseAccelerometerHexData, parseTemperatureHex } from "../lib/utils";
 
 const BluetoothSensorContext = createContext(null)
 
@@ -7,11 +8,12 @@ const SERVICE_UUID = "11111111-1111-1111-1111-111111111111"
 const READ_NOTIFY_CHARACTERISTIC_UUID = "22222222-2222-2222-2222-222222222222"
 const WRITE_CHARACTERISTIC_UUID = "44444444-4444-4444-4444-444444444444"
 
-export const BluetoothSensorProvider = ({ children, parseHexData, endpoint }) => {
+export const BluetoothSensorProvider = ({ children }) => {
   const [status, setStatus] = useState("Disconnected")
   const [device, setDevice] = useState(null)
   const [isConnected, setIsConnected] = useState(false)
-  const [data, setData] = useState(null)
+ const [temperatureData, setTemperatureData] = useState(null)
+const [accelerometerData, setAccelerometerData] = useState(null)
 
   const notifyCharRef = useRef(null)
   const writeCharRef = useRef(null)
@@ -43,32 +45,45 @@ export const BluetoothSensorProvider = ({ children, parseHexData, endpoint }) =>
     }
   }, [])
 
-  const handleCharacteristicValueChanged = useCallback(
-    async (event) => {
-      const value = event.target.value
-      let hexString = "0x"
-      for (let i = 0; i < value.byteLength; i++) {
-        hexString += ("00" + value.getUint8(i).toString(16)).slice(-2)
-      }
+ const handleCharacteristicValueChanged = useCallback(
+  async (event) => {
+    const value = event.target.value;
+    let hexString = "0x";
+    for (let i = 0; i < value.byteLength; i++) {
+      hexString += ("00" + value.getUint8(i).toString(16)).slice(-2);
+    }
 
-      try {
-        const parsed = parseHexData(hexString)
-        setStatus("Receiving data...")
+    try {
+      const parsedTemperature = parseTemperatureHex(hexString);
+      const parsedAccelerometer = parseAccelerometerHexData(hexString);
 
-        await fetch(endpoint, {
+      // Save both types if available
+      if (parsedTemperature?.temperature) {
+        setTemperatureData(parsedTemperature);
+        await fetch('/api/temperature', {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(parsed),
-        })
-
-        setData(parsed)
-      } catch (error) {
-        console.error("Error parsing device data:", error)
-        setStatus("Failed to process data")
+          body: JSON.stringify(parsedTemperature),
+        });
       }
-    },
-    [parseHexData, endpoint]
-  )
+
+      if (parsedAccelerometer?.x !== undefined) {
+        setAccelerometerData(parsedAccelerometer);
+        await fetch('/api/accelerometer', {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(parsedAccelerometer),
+        });
+      }
+
+      setStatus("Receiving data...");
+    } catch (error) {
+      console.error("Error parsing device data:", error);
+      setStatus("Failed to process data");
+    }
+  },
+  []
+);
 
   const connectBluetooth = useCallback(async () => {
     if (!navigator.bluetooth) {
@@ -126,7 +141,8 @@ export const BluetoothSensorProvider = ({ children, parseHexData, endpoint }) =>
     }
 
     setIsConnected(false)
-    setData(null)
+    setTemperatureData(null)
+    setAccelerometerData(null)
     setDevice(null)
     setStatus("Disconnected")
   }, [device, handleCharacteristicValueChanged, stopWriteInterval])
@@ -142,7 +158,8 @@ export const BluetoothSensorProvider = ({ children, parseHexData, endpoint }) =>
       value={{
         status,
         isConnected,
-        data,
+        temperatureData,
+    accelerometerData,
         connectBluetooth,
         disconnectBluetooth,
       }}>

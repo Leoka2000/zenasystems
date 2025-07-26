@@ -63,14 +63,14 @@ export const ChartLineAccelerometer = ({ liveData }) => {
   }, [fetchHistory])
 
   React.useEffect(() => {
-    if (liveData) {
-      setData((prev) => {
-        const exists = prev.find((d) => d.timestamp === liveData.timestamp)
-        if (exists) return prev
-        return [...prev, liveData].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
-      })
-    }
-  }, [liveData])
+  if (liveData && liveData.timestamp) {
+    setData((prev) => {
+      const exists = prev.some((d) => d.timestamp === liveData.timestamp)
+      if (exists) return prev
+      return [...prev, liveData].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
+    })
+  }
+}, [liveData])
 
   const stats = React.useMemo(() => {
     if (!data.length) return { current: null }

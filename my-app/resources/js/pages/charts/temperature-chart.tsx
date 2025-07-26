@@ -104,6 +104,10 @@ export const ChartLineInteractive = ({
     return { current, average, min, max }
   }, [data])
 
+  React.useEffect(() => {
+  console.log("Live accelerometer data received:", data)
+}, [data])
+
   return (
     <Card className="py-4 sm:py-0">
       <CardHeader className="flex z-10 flex-col items-stretch border-b !p-0 sm:flex-row">

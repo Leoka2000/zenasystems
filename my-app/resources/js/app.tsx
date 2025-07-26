@@ -6,7 +6,7 @@ import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
 import { configureEcho } from '@laravel/echo-react';
 import { BluetoothSensorProvider } from './context/useBluetoothSensor'; 
-import { parseHexData } from './lib/utils';
+import { parseAccelerometerHexData, parseTemperatureHex } from './lib/utils';
 
 configureEcho({
     broadcaster: 'reverb',
@@ -23,10 +23,10 @@ createInertiaApp({
 
         root.render(
          <BluetoothSensorProvider
-           parseHexData={parseHexData}
-  endpoint="/api/accelerometer"
          >
+          
         <App {...props} />
+ 
          </BluetoothSensorProvider >
          );
     },
