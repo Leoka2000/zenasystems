@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -165,6 +165,13 @@ export const ChartLineInteractive = ({
         >
           <LineChart data={data} margin={{ left: 12, right: 12 }}>
             <CartesianGrid vertical={false} />
+             <YAxis
+    tickLine={false}
+    axisLine={false}
+    tickMargin={8}
+    domain={["auto", "auto"]}
+    tickFormatter={(value) => `${value}°C`}
+  />
             <XAxis
               dataKey="date"
               tickLine={false}
